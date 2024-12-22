@@ -17,6 +17,7 @@ zstyle ':prezto:*:*' color yes
 zstyle ':prezto:module:editor' key-bindings emacs
 zstyle ':prezto:module:editor' dot-expansion yes
 zstyle ':prezto:module:utility' safe-ops no
+zstyle ':completion:*:commands' rehash 1
 
 BASE_SHARE=/nix/.base/share
 SITE_FUNCTIONS=$BASE_SHARE/zsh/site-functions
