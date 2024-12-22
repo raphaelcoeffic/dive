@@ -29,6 +29,12 @@ jobs:
     - name: Checkout
       uses: actions/checkout@v4
 
+    - name: Build program index
+      env:
+        ARCH: ${{ matrix.platform.arch }}
+      run: |
+        make src/assets/programs.csv build_arch=$ARCH
+
     - name: Build pkg tool
       uses: houseabsolute/actions-rust-cross@v0
       with:

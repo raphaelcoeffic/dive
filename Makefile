@@ -51,28 +51,52 @@ endif
 
 cargo_build = cargo build --profile $(cargo_profile) --target $(cargo_target)
 
-.PHONY: clean dist-clean base-image pkg-bin $(pkg_bin)
+# programs index
+nix_channel ?= unstable
+nix_channels_url = https://nixos.org/channels/nixos-$(nix_channel)
+dl_prog_index = curl -sL -o - $(nix_channels_url)/nixexprs.tar.xz
+
+assets = src/assets
+prog_index_sqlite = $(assets)/programs.sqlite
+unpack_prog_index = tar xJ -C $(assets) --strip-components=1 --wildcards '*/programs.sqlite'
+
+prog_index_csv = src/assets/programs.csv
+
+.PHONY: clean dist-clean clean-assets base-image pkg-bin $(pkg_bin)
 
 base_files = base.sha256 base.tar base.tar.xz
 
 clean:
-	@echo "Removing base files"
+	@echo "* Removing base files"
 	@rm -f $(base_files)
-	@echo "Removing nix directory"
+	@echo "* Removing nix directory"
 	@chmod -R +w nix/* 2>/dev/null ; rm -rf ./nix
 
-dist-clean: clean
-	@echo "Removing rust builds"
+dist-clean: clean clean-assets
+	@echo "* Removing rust builds"
 	@rm -rf target
 
+clean-assets:
+	@echo "* Removing assets"
+	@rm -rf $(assets)
+
 base-image: pkg-bin
-	@echo "Building base image"
-	$(build_img) $(build_img_args)
+	@echo "* Building base image"
+	@$(build_img) $(build_img_args)
 
 pkg-bin: $(pkg_bin)
 
-$(pkg_bin):
-	@echo "Building pkg tool"
-	$(cargo_build) --bin pkg
-	@echo "Stripping debug info"
-	strip $@
+$(pkg_bin): $(prog_index_csv)
+	@echo "* Building pkg tool"
+	@$(cargo_build) --bin pkg
+	@echo "* Stripping debug info"
+	@strip $@
+
+$(prog_index_sqlite):
+	@echo "* Downloading $@"
+	@mkdir -p $(assets)
+	@$(dl_prog_index) | $(unpack_prog_index)
+
+$(prog_index_csv): $(prog_index_sqlite)
+	@echo "* Converting $< to $@"
+	@./tools/convert-program-index.sh $(prog_index_sqlite) $(build_arch) > $@
