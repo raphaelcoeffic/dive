@@ -58,9 +58,11 @@ HISTSIZE=10000 # in memory
 SAVEHIST=10000 # persistent
 bindkey -e # emacs keymap
 
-command_not_found_handler() {
-  pkg _CmdNotFound $*
-}
+if command -v pkg >/dev/null 2>&1 ; then
+  command_not_found_handler() {
+    pkg _CmdNotFound $*
+  }
+fi
 
 # help stuff
 # echo "Welcome to the dive shell!"
