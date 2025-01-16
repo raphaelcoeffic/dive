@@ -17,6 +17,7 @@ zstyle ':prezto:*:*' color yes
 zstyle ':prezto:module:editor' key-bindings emacs
 zstyle ':prezto:module:editor' dot-expansion yes
 zstyle ':prezto:module:utility' safe-ops no
+zstyle ':completion:*:commands' rehash 1
 
 BASE_SHARE=/nix/.base/share
 SITE_FUNCTIONS=$BASE_SHARE/zsh/site-functions
@@ -43,6 +44,7 @@ fpath+=( $PRETZO_MODULES/completion )
 
 unsetopt EXTENDED_GLOB
 unsetopt MENU_COMPLETE
+unsetopt CORRECT
 
 setopt AUTO_CD
 setopt AUTO_MENU
@@ -55,6 +57,12 @@ HISTFILE="${XDG_CACHE_HOME:-$HOME/.cache}/.zsh_history"
 HISTSIZE=10000 # in memory
 SAVEHIST=10000 # persistent
 bindkey -e # emacs keymap
+
+if command -v pkg >/dev/null 2>&1 ; then
+  command_not_found_handler() {
+    pkg _CmdNotFound $*
+  }
+fi
 
 # help stuff
 # echo "Welcome to the dive shell!"

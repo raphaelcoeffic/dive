@@ -1,7 +1,4 @@
 /target
-/base
-/ofs
-nix
-image_builder/base.tar.xz
-base.tar.xz
-base.sha256
+/nix
+base.*
+src/assets/programs.*
