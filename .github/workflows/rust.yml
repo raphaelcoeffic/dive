@@ -18,11 +18,11 @@ jobs:
         platform:
           - arch: x86_64
             target: x86_64-unknown-linux-musl
-            runs-on: ubuntu-22.04
+            runs-on: ubuntu-24.04
 
           - arch: aarch64
             target: aarch64-unknown-linux-musl
-            runs-on: ubuntu-22.04
+            runs-on: ubuntu-24.04
 
     runs-on: ${{ matrix.platform.runs-on }}
     steps:
@@ -51,6 +51,7 @@ jobs:
           sudo apt-get update
           sudo apt-get install qemu-user-static
         fi
+        sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
         cargo run --bin build-img -- -a $ARCH -b target/$TARGET/release/pkg
         cargo clean
 
