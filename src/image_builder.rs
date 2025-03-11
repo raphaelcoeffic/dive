@@ -25,10 +25,10 @@ use tempfile::tempdir;
 use crate::nixos;
 use crate::shell::*;
 
-const NIX_VERSION: &str = "2.25.2";
+const NIX_VERSION: &str = "2.24.12";
 
 const NIX_CONF: &str = "experimental-features = nix-command flakes
-extra-nix-path = nixpkgs=flake:nixpkgs
+extra-nix-path = nixpkgs=github:nixos/nixpkgs/nixos-24.11
 build-users-group =
 sandbox = false
 ";
