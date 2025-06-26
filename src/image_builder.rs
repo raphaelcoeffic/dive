@@ -8,6 +8,7 @@ use std::{
 };
 
 use anyhow::{bail, Context, Result};
+use const_format::formatcp;
 use indicatif::{ProgressBar, ProgressStyle};
 use liblzma::read::XzDecoder;
 use regex::Regex;
@@ -25,13 +26,16 @@ use tempfile::tempdir;
 use crate::nixos;
 use crate::shell::*;
 
-const NIX_VERSION: &str = "2.24.12";
+const NIX_VERSION: &str = "2.28.3";
 
-const NIX_CONF: &str = "experimental-features = nix-command flakes
-extra-nix-path = nixpkgs=github:nixos/nixpkgs/nixos-24.11
+const NIX_CONF: &str = formatcp!(
+    "experimental-features = nix-command flakes
+extra-nix-path = nixpkgs=github:nixos/nixpkgs/nixos-{}
 build-users-group =
 sandbox = false
-";
+",
+    nixos::NIXOS_VERSION
+);
 
 static BASE_SHA256: &str = "/nix/.base.sha256";
 static BASE_PATHS: &str = "/nix/.base.paths";
