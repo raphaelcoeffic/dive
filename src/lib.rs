@@ -13,6 +13,9 @@ mod embedded_image;
 
 mod pid_file;
 
+pub(crate) const NIX_VERSION: &str = "2.28.3";
+pub(crate) const NIXOS_VERSION: &str = "25.05";
+
 pub(crate) const CACHE_HOME: &str = "/nix/.cache";
 pub(crate) const CONFIG_HOME: &str = "/nix/.config";
 
