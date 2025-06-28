@@ -26,15 +26,13 @@ use tempfile::tempdir;
 use crate::nixos;
 use crate::shell::*;
 
-const NIX_VERSION: &str = "2.28.3";
-
 const NIX_CONF: &str = formatcp!(
     "experimental-features = nix-command flakes
 extra-nix-path = nixpkgs=github:nixos/nixpkgs/nixos-{}
 build-users-group =
 sandbox = false
 ",
-    nixos::NIXOS_VERSION
+    crate::NIXOS_VERSION
 );
 
 static BASE_SHA256: &str = "/nix/.base.sha256";
@@ -464,8 +462,8 @@ where
     let nix_store = dest.join("store");
     if !nix_store.exists() {
         log::info!("installing Nix in {}", dest.display());
-        let nix_url = nix_installer_url(NIX_VERSION, arch);
-        download_and_install_nix(NIX_VERSION, arch, &nix_url, dest)?;
+        let nix_url = nix_installer_url(crate::NIX_VERSION, arch);
+        download_and_install_nix(crate::NIX_VERSION, arch, &nix_url, dest)?;
     }
 
     let nix_bin = dest.join(".bin");
@@ -473,7 +471,7 @@ where
     fs::create_dir_all(&gcroots)?;
 
     if !symlink_exists(&nix_bin) {
-        let nix_store_path = find_nix(&nix_store, NIX_VERSION)?;
+        let nix_store_path = find_nix(&nix_store, crate::NIX_VERSION)?;
         let nix_path = Path::new("/nix/store").join(nix_store_path);
         symlink(nix_path.join("bin"), nix_bin).unwrap();
         symlink(&nix_path, gcroots.join("nix")).unwrap();

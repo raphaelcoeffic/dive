@@ -8,8 +8,6 @@ use std::{
 use anyhow::{bail, Context, Result};
 use regex::Regex;
 
-pub(crate) const NIXOS_VERSION: &str = "25.05";
-
 pub(crate) const ENV_VARS: [(&str, &str); 4] = [
     ("PATH", "/nix/.bin"),
     ("NIX_CONF_DIR", "/nix/etc"),
@@ -78,7 +76,7 @@ pub fn build_flake_from_package_list(
         match &caps[1] {
             "name" => name,
             "description" => description,
-            "version" => NIXOS_VERSION,
+            "version" => crate::NIXOS_VERSION,
             "packages" => &package_list,
             _ => "",
         }
