@@ -22,7 +22,7 @@ jobs:
 
           - arch: aarch64
             target: aarch64-unknown-linux-musl
-            runs-on: ubuntu-24.04
+            runs-on: ubuntu-24.04-arm
 
     runs-on: ${{ matrix.platform.runs-on }}
     steps:
@@ -36,7 +36,7 @@ jobs:
         make src/assets/programs.csv build_arch=$ARCH
 
     - name: Build pkg tool
-      uses: houseabsolute/actions-rust-cross@v0
+      uses: houseabsolute/actions-rust-cross@v1
       with:
         target: ${{ matrix.platform.target }}
         args: "--locked --release --bin pkg"
@@ -64,7 +64,7 @@ jobs:
           base.sha256
 
     - name: Build dive
-      uses: houseabsolute/actions-rust-cross@v0
+      uses: houseabsolute/actions-rust-cross@v1
       with:
         target: ${{ matrix.platform.target }}
         args: "--locked --release --features embedded_image"
