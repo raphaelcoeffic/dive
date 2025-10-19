@@ -186,9 +186,7 @@ impl DetachedMount {
     where
         P: AsRef<Path>,
     {
-        unshare(UnshareFlags::NEWNS)
-            .context("could not create new mount namespace")?;
-
+        private_mount_namespace()?;
         self.mount(target)
     }
 }
