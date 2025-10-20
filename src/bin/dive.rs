@@ -50,6 +50,18 @@ fn get_lead_pid(container_id: &str) -> Option<i32> {
         .or_else(|| pid_lookup(container_id))
 }
 
+fn base_state_dir() -> PathBuf {
+    let cfg_state_dir = option_env!("CONFIG_STATE_DIR");
+    if std::env::var_os("XDG_STATE_HOME").is_none() {
+        cfg_state_dir
+            .map(PathBuf::from)
+            .or(dirs::state_dir())
+            .unwrap()
+    } else {
+        dirs::state_dir().unwrap()
+    }
+}
+
 fn get_img_dir(args: &Args) -> PathBuf {
     if let Ok(img_dir) = std::env::var(ENV_IMG_DIR) {
         return PathBuf::from(img_dir);
@@ -57,14 +69,14 @@ fn get_img_dir(args: &Args) -> PathBuf {
     if args.img_dir.is_some() {
         return PathBuf::from(args.img_dir.clone().unwrap());
     }
-    dirs::state_dir().unwrap().join(APP_NAME).join(IMG_DIR)
+    base_state_dir().join(APP_NAME).join(IMG_DIR)
 }
 
 fn get_state_dir() -> PathBuf {
     if let Ok(ovl_dir) = std::env::var(ENV_STATE_DIR) {
         return PathBuf::from(ovl_dir);
     }
-    dirs::state_dir().unwrap().join(APP_NAME)
+    base_state_dir().join(APP_NAME)
 }
 
 fn init_logging() {
