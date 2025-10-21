@@ -97,25 +97,22 @@ where
         for dir in dest.read_dir()? {
             let path = dir?.path();
             if let Err(err) = chmod_dirs(&path, |mode| mode | 0o700) {
-                log::error!(
+                bail!(
                     "could not fix permissions for {}: {}",
                     path.display(),
                     err
                 );
-                bail!(err);
             }
             if path.is_dir() {
                 if let Err(err) = fs::remove_dir_all(&path) {
-                    log::error!("could not remove {}: {}", path.display(), err);
-                    bail!(err);
+                    bail!("could not remove {}: {}", path.display(), err);
                 }
             } else if let Err(err) = fs::remove_file(&path) {
-                log::error!("could not remove {}: {}", path.display(), err);
-                bail!(err);
+                bail!("could not remove {}: {}", path.display(), err);
             }
         }
-    } else {
-        fs::create_dir_all(dest).unwrap();
+    } else if let Err(err) = fs::create_dir_all(dest) {
+        bail!("could not create {}: {}", dest.display(), err);
     }
 
     log::info!("unpacking base image into {}", dest.display());
