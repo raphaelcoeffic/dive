@@ -93,6 +93,37 @@ pkg list
 pkg search helix
 ```
 
+## Troubleshooting
+
+**Github rate limits**
+
+In case you hit Github's rate limit when installing a package:
+```
+* snmpd does not exist. Install net-snmp package? [y/N]
+error:
+       … while updating the lock file of flake 'path:/nix/.cache/env-flake?lastModified=1765815061&narHash=sha256-gUo0/L8xm6/4Ky19XkxEmU3fQ0jfQbwJDI%2BI9cRfeCQ%3D'
+       … while updating the flake input 'flake-utils'
+       … while fetching the input 'github:numtide/flake-utils'
+       error: unable to download 'https://api.github.com/repos/numtide/flake-utils/commits/HEAD': HTTP error 403
+       response body:
+       {"message":"API rate limit exceeded for x.x.x.x. (But here's the good news: Authenticated requests get a higher rate limit. Check out the documentation for more details.)","documentation_url":"https://docs.github.com/rest/overview/resources-in-the-rest-api#rate-limiting"}
+```
+
+You should add your Github token (any read-only token will work) to the Nix configuration:
+```
+GITHUB_TOKEN="****your token****"
+echo "access-tokens = github.com=${GITHUB_TOKEN}" >> ~/.local/state/dive/base-img/etc/nix.conf
+```
+
+The file will then look like this:
+```
+experimental-features = nix-command flakes
+extra-nix-path = nixpkgs=github:nixos/nixpkgs/nixos-25.05
+build-users-group =
+sandbox = false
+access-tokens = github.com=...
+```
+
 ## Contributing
 
 Contributions are welcome! Feel free to open issues and pull requests.
