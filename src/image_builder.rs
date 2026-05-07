@@ -105,6 +105,10 @@ impl BaseImageBuilder {
         log::info!("building base image");
 
         let tmp = tempdir()?;
+        // SAFETY: fork() requires the process to be single-threaded — the
+        // child only inherits the calling thread, and build_base_child
+        // runs Rust code before exit().
+        crate::fork::assert_single_threaded();
         match unsafe { fork()? } {
             Fork::Child(_) => exit(self.build_base_child(tmp.path())),
             Fork::Parent(child_pid) => self.build_base_parent(child_pid),

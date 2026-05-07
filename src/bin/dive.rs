@@ -162,6 +162,10 @@ fn main() -> Result<()> {
         .make_mount(lead_pid)
         .context("could not init shared mount")?;
 
+    // SAFETY: fork() requires the process to be single-threaded — the
+    // child only inherits the calling thread, and the child branch runs
+    // Rust code before exec().
+    dive::fork::assert_single_threaded();
     match unsafe { fork()? } {
         Fork::Child(_) => {
             if let Err(err) = prepare_shell_environment(&shared_mount, lead_pid)
