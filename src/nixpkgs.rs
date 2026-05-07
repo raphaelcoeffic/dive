@@ -183,13 +183,14 @@ fn get_basic_auth_header(user: &str, pass: &str) -> String {
 
 fn pkg_search(query: serde_json::Value) -> Result<Packages> {
     let response = ureq::post(NIXOS_SEARCH_URL)
-        .set("Accept", "application/json")
-        .set(
+        .header("Accept", "application/json")
+        .header(
             "Authorization",
             &get_basic_auth_header(NIXOS_SEARCH_USER, NIXOS_SEARCH_PASS),
         )
-        .send_json(query)?
-        .into_json::<ESResponse>()?;
+        .send_json(&query)?
+        .body_mut()
+        .read_json::<ESResponse>()?;
 
     let pkgs: Vec<Package> =
         response.hits.hits.into_iter().map(|h| h.package).collect();

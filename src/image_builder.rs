@@ -395,13 +395,15 @@ fn download_and_install_nix(
     log::info!("downloading {url} into {}", dest.display());
     let response = ureq::get(url).call()?;
     let content_length: u64 = response
-        .header("Content-Length")
-        .unwrap_or("")
-        .parse()
+        .headers()
+        .get("content-length")
+        .and_then(|v| v.to_str().ok())
+        .and_then(|v| v.parse().ok())
         .unwrap_or_default();
 
     let bar = progress_bar(content_length);
-    let decoder = XzDecoder::new(bar.wrap_read(response.into_reader()));
+    let decoder =
+        XzDecoder::new(bar.wrap_read(response.into_body().into_reader()));
     let mut ar = Archive::new(decoder);
 
     let dest_dir = Path::new(dest);
