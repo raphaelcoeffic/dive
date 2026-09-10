@@ -240,16 +240,21 @@ pub fn installed_packages() -> Result<Packages> {
     }
 }
 
-pub fn builtin_packages() -> Packages {
-    crate::BASE_PACKAGES
-        .iter()
-        .map(|s| Package::new_builtin(s))
-        .collect()
+pub fn builtin_packages() -> Result<Packages> {
+    let content = match fs::read_to_string(crate::BASE_PACKAGES_FILE) {
+        Ok(content) => content,
+        // base images built before the package list was recorded
+        Err(err) if err.kind() == ErrorKind::NotFound => {
+            crate::BASE_PACKAGES.join("\n")
+        }
+        Err(err) => return Err(err.into()),
+    };
+    Ok(content.lines().map(Package::new_builtin).collect())
 }
 
 pub fn all_packages_sorted() -> Result<Packages> {
     let installed_packages = installed_packages()?;
-    let builtin_packages = builtin_packages();
+    let builtin_packages = builtin_packages()?;
 
     Ok(BinaryHeap::from_iter(
         builtin_packages.into_iter().chain(installed_packages),

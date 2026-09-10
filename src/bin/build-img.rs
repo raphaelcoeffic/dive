@@ -16,13 +16,13 @@ struct Args {
     #[arg(short, long, env)]
     persistent_base_dir: Option<PathBuf>,
 
-    /// Alternative flake directory
-    #[arg(short, long, env)]
-    flake_dir: Option<PathBuf>,
-
     /// Add binary into base image
     #[arg(short = 'b', long = "add-binary")]
     binaries: Vec<PathBuf>,
+
+    /// Add package into base image (on top of the default packages)
+    #[arg(short = 'P', long = "add-package")]
+    packages: Vec<String>,
 
     /// Architecture
     #[arg(short, long, env)]
@@ -111,13 +111,10 @@ fn main() -> Result<()> {
     let base_dir = BaseDir::new(args.persistent_base_dir)?;
     let mut base_builder = BaseImageBuilder::new(base_dir.path());
     base_builder.binaries(args.binaries);
+    base_builder.extra_packages(args.packages);
 
     if !args.unpackaged {
         base_builder.package(args.output, !args.uncompressed);
-    }
-
-    if let Some(flake_dir) = args.flake_dir {
-        base_builder.flake_dir(flake_dir);
     }
 
     if args.shell_exec {

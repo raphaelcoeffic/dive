@@ -89,6 +89,13 @@ Notes:
   `-b <path to pkg>` to `build-img`. The Makefile's `base-image` target always
   adds it; to use `make` without it, override both variables:
   `make base-image pkg_bin= build_img_args="-a x86_64"`.
+- Extra packages can be added on top of the default ones (see `BASE_PACKAGES`
+  in `src/lib.rs`) with `-P`/`--add-package`, which can be repeated. Names are
+  [nixpkgs](https://search.nixos.org/packages) attribute names, e.g.
+  `cargo run --bin build-img -- -a x86_64 -P tshark -P python3`. With `make`,
+  append them to `build_img_args`:
+  `make base-image build_img_args="-a x86_64 -b <path to pkg> -P tshark"`.
+  Inside `dive`, `pkg list` shows them as built-in packages.
 - `--features embedded_image` lets `dive` install the base image from its own
   binary. Without it, `dive` builds the base image on first run, which requires
   network access.

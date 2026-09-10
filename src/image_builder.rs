@@ -43,8 +43,8 @@ static STATIC_FILES: &[(&str, &str)] =
 
 pub struct BaseImageBuilder {
     nix_dir: PathBuf,
-    flake_dir: Option<PathBuf>,
     binaries: Vec<PathBuf>,
+    extra_packages: Vec<String>,
     shell_exec: bool,
     package_output: Option<PathBuf>,
     compress: bool,
@@ -61,25 +61,35 @@ impl BaseImageBuilder {
     {
         BaseImageBuilder {
             nix_dir: nix_dir.as_ref().to_owned(),
-            flake_dir: None,
             binaries: Vec::new(),
+            extra_packages: Vec::new(),
             shell_exec: false,
             package_output: None,
             compress: false,
         }
     }
 
-    pub fn flake_dir<P>(&mut self, flake_dir: P) -> &mut Self
-    where
-        P: AsRef<Path>,
-    {
-        self.flake_dir.replace(flake_dir.as_ref().to_owned());
-        self
-    }
-
     pub fn binaries(&mut self, binaries: Vec<PathBuf>) -> &mut Self {
         self.binaries = binaries;
         self
+    }
+
+    /// Packages added to the default package list
+    pub fn extra_packages(&mut self, packages: Vec<String>) -> &mut Self {
+        self.extra_packages = packages;
+        self
+    }
+
+    /// Default and extra packages, sorted and deduplicated
+    fn packages(&self) -> Vec<&str> {
+        let mut packages: Vec<&str> = crate::BASE_PACKAGES
+            .iter()
+            .copied()
+            .chain(self.extra_packages.iter().map(String::as_str))
+            .collect();
+        packages.sort();
+        packages.dedup();
+        packages
     }
 
     pub fn shell_exec(&mut self, shell_exec: bool) -> &mut Self {
@@ -133,6 +143,14 @@ impl BaseImageBuilder {
             fs::write(dest, content)
         }) {
             log::error!("failed to copy static files: {err}");
+            return Self::POST_PROCESS_FAILED;
+        }
+
+        // package list, listed as built-in by `pkg`
+        let packages = self.packages().join("\n") + "\n";
+        hasher.update(&packages);
+        if let Err(err) = fs::write(crate::BASE_PACKAGES_FILE, packages) {
+            log::error!("failed to write package list: {err}");
             return Self::POST_PROCESS_FAILED;
         }
 
@@ -217,15 +235,12 @@ impl BaseImageBuilder {
 
         // build base flake
         let flake_dir = Path::new(crate::CACHE_HOME).join("base-flake");
-        let store_path = match &self.flake_dir {
-            None => nixos::build_flake_from_package_list(
-                "debug-shell",
-                "A debug shell",
-                crate::BASE_PACKAGES,
-                &flake_dir,
-            )?,
-            Some(flake_dir) => nixos::build_flake(flake_dir)?,
-        };
+        let store_path = nixos::build_flake_from_package_list(
+            "debug-shell",
+            "A debug shell",
+            &self.packages(),
+            &flake_dir,
+        )?;
         symlink_base(&store_path)?;
         log::debug!("built base image");
 
@@ -280,6 +295,7 @@ impl BaseImageBuilder {
             ".bin",
             ".base",
             ".base.paths",
+            ".base.packages",
             ".base.sha256",
             ".base.reginfo",
             "etc",

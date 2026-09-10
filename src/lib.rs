@@ -22,6 +22,7 @@ pub(crate) const CONFIG_HOME: &str = "/nix/.config";
 
 pub(crate) const USER_ENV_DIR: &str = "/nix/.env";
 pub(crate) const BASE_DIR: &str = "/nix/.base";
+pub(crate) const BASE_PACKAGES_FILE: &str = "/nix/.base.packages";
 pub(crate) const ETC_DIR: &str = "/nix/etc";
 
 pub(crate) const SSL_CERTS: &str = "/nix/.base/etc/ssl/certs/ca-bundle.crt";
