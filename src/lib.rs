@@ -1,4 +1,5 @@
 pub mod base_image;
+pub mod fork;
 pub mod image_builder;
 pub mod namespaces;
 pub mod nixos;

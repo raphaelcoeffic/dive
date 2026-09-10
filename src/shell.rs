@@ -45,6 +45,10 @@ impl Shell {
     }
 
     pub fn spawn(self) -> Result<i32> {
+        // SAFETY: fork() requires the process to be single-threaded — the
+        // child only inherits the calling thread, and dive runs Rust code
+        // before exec().
+        crate::fork::assert_single_threaded();
         match unsafe { fork()? } {
             Fork::Child(_) => {
                 let err = self.exec();

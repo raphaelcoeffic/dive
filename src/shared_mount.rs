@@ -297,6 +297,9 @@ fn new_userns_fd(id_mapping: &IdMaps) -> Result<OwnedFd, std::io::Error> {
 }
 
 fn clone_new_userns() -> Result<RawPid, std::io::Error> {
+    // Intentionally a short prefix of the kernel's `struct clone_args`:
+    // `set_tid`, `set_tid_size`, and `cgroup` are omitted. The kernel uses
+    // `args_size` to detect this and zero-fills the missing fields.
     #[repr(C)]
     #[allow(non_camel_case_types)]
     struct clone3_args {
