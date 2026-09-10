@@ -428,7 +428,7 @@ dependencies = [
 
 [[package]]
 name = "dive"
-version = "0.2.1"
+version = "0.2.2"
 dependencies = [
  "anstream 0.6.21",
  "anyhow",
