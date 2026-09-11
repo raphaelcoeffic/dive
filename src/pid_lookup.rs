@@ -106,9 +106,9 @@ const _RUNTIMES: &[ContainerRuntime] = &[
 pub fn pid_lookup(value: &str) -> Option<i32> {
     if let Ok(pid) = value.parse::<i32>() {
         return Some(pid);
-    };
-    return _RUNTIMES
+    }
+    _RUNTIMES
         .iter()
         .filter(|r| (r.available)())
-        .find_map(|r| (r.get_pid)(value));
+        .find_map(|r| (r.get_pid)(value))
 }
