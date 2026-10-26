@@ -14,8 +14,8 @@ mod embedded_image;
 
 mod pid_file;
 
-pub(crate) const NIX_VERSION: &str = "2.28.3";
-pub(crate) const NIXOS_VERSION: &str = "25.05";
+pub(crate) const NIX_VERSION: &str = "2.34.9";
+pub(crate) const NIXOS_VERSION: &str = "26.05";
 
 pub(crate) const CACHE_HOME: &str = "/nix/.cache";
 pub(crate) const CONFIG_HOME: &str = "/nix/.config";
@@ -30,7 +30,7 @@ pub(crate) const SSL_CERTS: &str = "/nix/.base/etc/ssl/certs/ca-bundle.crt";
 /// CA roots distrusted in the base image's `cacert` (NSS labels).
 ///
 /// NSS 3.131.1 removed these after the eMudhra intermediate CA compromise
-/// (October 2026), but nixos-25.05 is frozen at NSS 3.117.
+/// (October 2026), but nixos-26.05 is still at NSS 3.126.
 pub(crate) const CACERT_BLOCKLIST: &[&str] = &[
     "emSign ECC Root CA - G3",
     "emSign Root CA - C1",
