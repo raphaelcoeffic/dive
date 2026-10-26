@@ -7,13 +7,18 @@ use std::{
 };
 
 use anyhow::{Context, Result};
+use const_format::formatcp;
 use serde::{self, Deserialize, Serialize};
 use serde_json::json;
 
 use crate::nixos;
 
-const NIXOS_SEARCH_URL: &str =
-    "https://search.nixos.org/backend/latest-*-nixos-unstable/_search";
+/// Matches every index generation still served for the NixOS release
+/// the packages are built from (see `collapse_newest()`).
+const NIXOS_SEARCH_URL: &str = formatcp!(
+    "https://search.nixos.org/backend/latest-*-nixos-{}/_search",
+    crate::NIXOS_VERSION
+);
 
 const NIXOS_SEARCH_USER: &str = "aWVSALXpZv";
 const NIXOS_SEARCH_PASS: &str = "X8gPHnzL52wFEekuxsfQ9cSh";
@@ -32,6 +37,36 @@ struct ESHits {
 struct Hit {
     #[serde(rename = "_source")]
     package: Package,
+    inner_hits: Option<InnerHits>,
+}
+
+#[derive(Serialize, Deserialize)]
+struct InnerHits {
+    newest: ESResponse,
+}
+
+impl Hit {
+    /// Package from the newest index generation, if collapsed
+    fn newest_package(self) -> Package {
+        self.inner_hits
+            .and_then(|i| i.newest.hits.hits.into_iter().next())
+            .map_or(self.package, |h| h.package)
+    }
+}
+
+/// Collapse search results to one hit per package.
+///
+/// `NIXOS_SEARCH_URL` matches several index generations, and the older ones
+/// are not updated anymore: take each package from the newest one.
+fn collapse_newest() -> serde_json::Value {
+    json!({
+      "field": "package_attr_name",
+      "inner_hits": {
+        "name": "newest",
+        "size": 1,
+        "sort": [{ "_index": "desc" }]
+      }
+    })
 }
 
 #[derive(
@@ -146,6 +181,7 @@ fn query_payload<'a, I: IntoIterator<Item = &'a String>>(
           "package_pversion": "desc"
         }
       ],
+      "collapse": collapse_newest(),
       "query": {
         "bool": {
           "filter": [
@@ -192,8 +228,12 @@ fn pkg_search(query: serde_json::Value) -> Result<Packages> {
         .body_mut()
         .read_json::<ESResponse>()?;
 
-    let pkgs: Vec<Package> =
-        response.hits.hits.into_iter().map(|h| h.package).collect();
+    let pkgs: Vec<Package> = response
+        .hits
+        .hits
+        .into_iter()
+        .map(Hit::newest_package)
+        .collect();
 
     Ok(pkgs)
 }
@@ -211,6 +251,7 @@ pub fn find_package(name: &str) -> Result<Option<Package>> {
           "query": format!("package_attr_name:\"{}\"", name)
         }
       },
+      "collapse": collapse_newest(),
       "size": 1,
       "from": 0,
       "sort": []
