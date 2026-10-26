@@ -1,4 +1,4 @@
 /target
 /nix
 base.*
-src/assets/programs.*
+src/assets/programs*
