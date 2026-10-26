@@ -2,6 +2,7 @@ use std::{
     collections::HashMap,
     ffi::{OsStr, OsString},
     fs::create_dir_all,
+    io,
     os::unix::process::CommandExt,
     process::{exit, Command},
 };
@@ -18,6 +19,7 @@ const DEFAULT_PATH: &str = "/usr/local/bin:/usr/bin:/bin";
 pub struct Shell {
     name: String,
     env: HashMap<OsString, OsString>,
+    command: Vec<String>,
 }
 
 impl Shell {
@@ -28,7 +30,18 @@ impl Shell {
         Shell {
             name: name.to_owned(),
             env: HashMap::new(),
+            command: Vec::new(),
         }
+    }
+
+    /// Command to execute instead of an interactive shell
+    pub fn command(&mut self, command: Vec<String>) -> &mut Self {
+        self.command = command;
+        self
+    }
+
+    fn program(&self) -> &str {
+        self.command.first().map_or("zsh", String::as_str)
     }
 
     pub fn env<I, K, V>(&mut self, vars: I) -> &mut Self
@@ -51,9 +64,14 @@ impl Shell {
         crate::fork::assert_single_threaded();
         match unsafe { fork()? } {
             Fork::Child(_) => {
+                let program = self.program().to_owned();
                 let err = self.exec();
-                log::error!("cannot execute shell: {err}");
-                exit(1);
+                log::error!("cannot execute {program}: {err}");
+                // same exit codes as shells
+                if err.kind() == io::ErrorKind::NotFound {
+                    exit(127);
+                }
+                exit(126);
             }
             Fork::Parent(child_pid) => wait_for_child(child_pid),
         }
@@ -68,7 +86,8 @@ impl Shell {
         // - bash
         // - sh at last
 
-        let mut cmd = Command::new("zsh");
+        let mut cmd = Command::new(self.program());
+        cmd.args(self.command.iter().skip(1));
         cmd.env_clear();
         cmd.envs(&self.env);
 
@@ -139,6 +158,16 @@ impl Shell {
 }
 
 pub fn wait_for_child(child_pid: rustix::thread::Pid) -> Result<i32> {
+    // Like system(3): terminal signals (Ctrl-C, Ctrl-\) are left to the
+    // child, which shares our process group when not run by an interactive
+    // shell. Only the parent ignores them, so the child is not affected.
+    //
+    // SAFETY: setting a disposition to SIG_IGN installs no handler.
+    unsafe {
+        libc::signal(libc::SIGINT, libc::SIG_IGN);
+        libc::signal(libc::SIGQUIT, libc::SIG_IGN);
+    }
+
     loop {
         let maybe_wait_status = waitpid(Some(child_pid), WaitOptions::UNTRACED)
             .context("waitpid failed")?;
@@ -160,6 +189,7 @@ pub fn wait_for_child(child_pid: rustix::thread::Pid) -> Result<i32> {
             if wait_status.signaled() {
                 let term_signal = wait_status.terminating_signal().unwrap();
                 log::debug!("term_signal = {}", term_signal);
+                return Ok(128 + term_signal as i32);
             }
 
             log::debug!("exit 1");
