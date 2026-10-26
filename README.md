@@ -167,7 +167,7 @@ echo "access-tokens = github.com=${GITHUB_TOKEN}" >> ~/.local/state/dive/base-im
 The file will then look like this:
 ```
 experimental-features = nix-command flakes
-extra-nix-path = nixpkgs=github:nixos/nixpkgs/nixos-25.05
+extra-nix-path = nixpkgs=github:nixos/nixpkgs/nixos-26.05
 build-users-group =
 sandbox = false
 access-tokens = github.com=...
