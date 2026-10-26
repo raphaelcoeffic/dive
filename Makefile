@@ -51,14 +51,19 @@ endif
 
 cargo_build = cargo build --profile $(cargo_profile) --target $(cargo_target)
 
-# programs index
-nix_channel ?= unstable
+# programs index, from the NixOS release packages are built from
+nixos_version := $(shell sed -n 's/^pub(crate) const NIXOS_VERSION: &str = "\(.*\)";$$/\1/p' src/lib.rs)
+ifeq ($(nixos_version),)
+  $(error could not read NIXOS_VERSION from src/lib.rs)
+endif
+nix_channel ?= $(nixos_version)
 nix_channels_url = https://nixos.org/channels/nixos-$(nix_channel)
-dl_prog_index = curl -sL -o - $(nix_channels_url)/nixexprs.tar.xz
+dl_prog_index = curl -sfL -o - $(nix_channels_url)/nixexprs.tar.xz
 
 assets = src/assets
-prog_index_sqlite = $(assets)/programs.sqlite
-unpack_prog_index = tar xJ -C $(assets) --strip-components=1 --wildcards '*/programs.sqlite'
+# channel in the name: changing it downloads the matching index
+prog_index_sqlite = $(assets)/programs-$(nix_channel).sqlite
+unpack_prog_index = tar xJO --wildcards '*/programs.sqlite'
 
 prog_index_csv = src/assets/programs.csv
 
@@ -95,7 +100,8 @@ $(pkg_bin): $(prog_index_csv)
 $(prog_index_sqlite):
 	@echo "* Downloading $@"
 	@mkdir -p $(assets)
-	@$(dl_prog_index) | $(unpack_prog_index)
+	@$(dl_prog_index) | $(unpack_prog_index) > $@.tmp
+	@mv $@.tmp $@
 
 $(prog_index_csv): $(prog_index_sqlite)
 	@echo "* Converting $< to $@"
