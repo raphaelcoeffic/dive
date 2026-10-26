@@ -76,6 +76,19 @@ jobs:
       run: |
         mv "target/$TARGET/release/dive" "dive-$TARGET"
 
+    - name: Smoke test
+      env:
+        TARGET: ${{ matrix.platform.target }}
+      run: |
+        docker run -d --rm --name dive-smoke alpine:3.22 sleep 600
+        dive="./dive-$TARGET dive-smoke --"
+        $dive true
+        test "$($dive echo hello)" = hello
+        rc=0; $dive bash -c 'exit 3' || rc=$?
+        test $rc -eq 3
+        $dive curl -sSf -o /dev/null https://github.com/
+        docker rm -f dive-smoke
+
     - name: Upload artifacts - binary
       uses: actions/upload-artifact@v4
       with:

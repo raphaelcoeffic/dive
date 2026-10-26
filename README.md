@@ -111,9 +111,17 @@ Notes:
 # Debug a running container
 dive <container-name>
 
+# Run a single command instead of an interactive shell
+dive <container-name> -- ss -tnp
+
 # Or run directly through cargo
 cargo run <container-name>
 ```
+
+A command given after `--` runs with the same environment as the
+interactive shell, but without the shell configuration (aliases, etc.).
+Its output can be piped, and `dive` exits with its exit status. For shell
+syntax, use `-- zsh -c '...'`.
 
 ## Examples
 
@@ -123,6 +131,9 @@ dive my-distroless-app
 
 # Debug a specific container by ID
 dive 7d3f2c1b9e4a
+
+# Capture the container's traffic into a local file
+dive my-app -- tcpdump -i eth0 -w - > capture.pcap
 ```
 
 ## Package Tool

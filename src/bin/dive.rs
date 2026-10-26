@@ -41,6 +41,10 @@ struct Args {
 
     /// Container ID
     container_id: String,
+
+    /// Command to execute instead of an interactive shell
+    #[arg(last = true)]
+    command: Vec<String>,
 }
 
 fn get_lead_pid(container_id: &str) -> Option<i32> {
@@ -90,6 +94,7 @@ fn init_logging() {
 
 fn reexec_with_sudo(
     container_id: &str,
+    command: &[String],
     lead_pid: i32,
     img_dir: &Path,
     state_dir: &Path,
@@ -106,6 +111,8 @@ fn reexec_with_sudo(
             format!("{}", self_exe.display()),
         ])
         .arg(container_id)
+        .arg("--")
+        .args(command)
         .exec())
 }
 
@@ -155,7 +162,13 @@ fn main() -> Result<()> {
 
     if !geteuid().is_root() {
         log::debug!("re-executing with sudo...");
-        reexec_with_sudo(&args.container_id, lead_pid, &img_dir, &state_dir)?
+        reexec_with_sudo(
+            &args.container_id,
+            &args.command,
+            lead_pid,
+            &img_dir,
+            &state_dir,
+        )?
     }
 
     let shared_mount = mnt_builder
@@ -185,7 +198,7 @@ fn main() -> Result<()> {
             };
 
             let mut shell = Shell::new(&args.container_id);
-            shell.env(proc_env);
+            shell.env(proc_env).command(args.command);
 
             match shell.spawn() {
                 Err(err) => {
