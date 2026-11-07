@@ -92,27 +92,6 @@ impl BaseImageBuilder {
         packages
     }
 
-    /// Nix expressions for `packages()`, with `cacert` stripped of
-    /// distrusted roots
-    fn package_exprs(&self) -> Vec<String> {
-        self.packages()
-            .into_iter()
-            .map(|p| {
-                if p != "cacert" {
-                    return p.to_owned();
-                }
-                let blacklist: Vec<String> = crate::CACERT_BLOCKLIST
-                    .iter()
-                    .map(|label| format!("\"{label}\""))
-                    .collect();
-                format!(
-                    "(cacert.override {{ blacklist = [ {} ]; }})",
-                    blacklist.join(" ")
-                )
-            })
-            .collect()
-    }
-
     pub fn shell_exec(&mut self, shell_exec: bool) -> &mut Self {
         self.shell_exec = shell_exec;
         self
@@ -256,9 +235,7 @@ impl BaseImageBuilder {
 
         // build base flake
         let flake_dir = Path::new(crate::CACHE_HOME).join("base-flake");
-        let package_exprs = self.package_exprs();
-        let packages: Vec<&str> =
-            package_exprs.iter().map(String::as_str).collect();
+        let packages = self.packages();
         let store_path = nixos::build_flake_from_package_list(
             "debug-shell",
             "A debug shell",

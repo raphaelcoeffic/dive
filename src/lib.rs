@@ -27,16 +27,6 @@ pub(crate) const ETC_DIR: &str = "/nix/etc";
 
 pub(crate) const SSL_CERTS: &str = "/nix/.base/etc/ssl/certs/ca-bundle.crt";
 
-/// CA roots distrusted in the base image's `cacert` (NSS labels).
-///
-/// NSS 3.131.1 removed these after the eMudhra intermediate CA compromise
-/// (October 2026), but nixos-26.05 is still at NSS 3.126.
-pub(crate) const CACERT_BLOCKLIST: &[&str] = &[
-    "emSign ECC Root CA - G3",
-    "emSign Root CA - C1",
-    "emSign ECC Root CA - C3",
-];
-
 pub const BASE_PACKAGES: &[&str] = &[
     "bash",
     "cacert",
