@@ -20,7 +20,6 @@ zstyle ':prezto:module:utility' safe-ops no
 zstyle ':completion:*:commands' rehash 1
 
 BASE_SHARE=/nix/.base/share
-SITE_FUNCTIONS=$BASE_SHARE/zsh/site-functions
 PRETZO_MODULES=$BASE_SHARE/zsh-prezto/modules
 
 # -- prezto modules
@@ -36,8 +35,8 @@ source $PRETZO_MODULES/utility/init.zsh
 fpath+=( $PRETZO_MODULES/utility )
 
 # -- some extras
-source $SITE_FUNCTIONS/fast-syntax-highlighting.plugin.zsh
-source $BASE_SHARE/zsh-autosuggestions/zsh-autosuggestions.zsh
+source $BASE_SHARE/zsh/plugins/fast-syntax-highlighting/fast-syntax-highlighting.plugin.zsh
+source $BASE_SHARE/zsh/plugins/zsh-autosuggestions/zsh-autosuggestions.zsh
 
 source $PRETZO_MODULES/completion/init.zsh
 fpath+=( $PRETZO_MODULES/completion )
